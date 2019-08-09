@@ -1,6 +1,7 @@
 import hashlib
 import requests
-
+import random
+import time
 import sys
 
 from uuid import uuid4
@@ -9,6 +10,7 @@ from timeit import default_timer as timer
 
 import random
 
+dictionary = {}
 
 def proof_of_work(last_proof):
     """
@@ -19,25 +21,35 @@ def proof_of_work(last_proof):
     - p is the previous proof, and p' is the new proof
     """
 
-    start = timer()
-
-    print("Searching for next proof")
-    proof = 0
-    #  TODO: Your code here
-
-    print("Proof found: " + str(proof) + " in " + str(timer() - start))
+    print("\nWe have started the proof of work process.\n")
+    time_start = time.time()
+    proof = random.randint(10000,10000000000000000000000000000000000000)
+    while valid_proof(last_proof, proof) is False:
+        proof += 1
+        if time.time() - time_start > 10:
+            return None
+    time_end = time.time()
+    print("\nThe proof of work process is over\n")
+    print(time_end - time_start)
     return proof
 
 
-def valid_proof(last_hash, proof):
+def valid_proof(last_proof, proof):
     """
     Validates the Proof:  Multi-ouroborus:  Do the last six characters of
     the last hash match the first six characters of the proof?
 
     IE:  last_hash: ...999123456, new hash 123456888...
     """
+    
+    
+    last_hash = hashlib.sha256(f'{last_proof}'.encode()).hexdigest()
 
-    # TODO: Your code here!
+    guess = f'{proof}'.encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    
+    return guess_hash[0:6] == last_hash[-6:]
+    
     pass
 
 
@@ -67,6 +79,7 @@ if __name__ == '__main__':
         # Get the last proof from the server
         r = requests.get(url=node + "/last_proof")
         data = r.json()
+        print(data)
         new_proof = proof_of_work(data.get('proof'))
 
         post_data = {"proof": new_proof,
